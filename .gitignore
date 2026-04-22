@@ -1,0 +1,36 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.env
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Gradle
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# 敏感信息 - 不提交包含真实 token 的本地配置副本
+*.local
+*.prod
+.secrets/

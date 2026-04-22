@@ -1,0 +1,57 @@
+# SMSForwarder 配置文件
+# 修改后需要重启应用或点击"重新加载配置"
+
+matching_rules:
+  - id: "login_code"
+    name: "登录验证码"
+    type: "content-regex"
+    phone: ""
+    content: '(?:验证码|校验码|动态码)[^\d]{0,5}(\d{4,8})'
+    variables:
+      code: "$1"
+
+  - id: "all_sms"
+    name: "全部短信"
+    type: "content-regex"
+    phone: ""
+    content: '[\s\S]+'
+    variables: {}
+
+push_rules:
+  - id: "sms_agent_demo"
+    name: "SMS Agent 示例"
+    enabled: false
+    type: "SMS_AGENT"
+    config:
+      endpoint: "https://your-server.example.com/api/push"
+      tag: "sms"
+      token: "your-token-here"
+
+  - id: "webhook_demo"
+    name: "Webhook 示例"
+    enabled: false
+    type: "CURL"
+    config:
+      url: "https://your-server.example.com/webhook"
+      method: "POST"
+      body_template: '{"from":"${_phone}","content":"${_content}","code":"${code}"}'
+      headers: "Content-Type: application/json"
+
+workflows:
+  - id: "login_code_workflow"
+    name: "登录验证码转发"
+    enabled: false
+    matching: "login_code"
+    pushers:
+      - id: "sms_agent_demo"
+        varMap:
+          mappings: []
+
+  - id: "all_sms_workflow"
+    name: "全部短信转发"
+    enabled: false
+    matching: "all_sms"
+    pushers:
+      - id: "webhook_demo"
+        varMap:
+          mappings: []
