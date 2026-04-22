@@ -16,6 +16,7 @@ import com.example.smsforwarder.core.config.ConfigManager
 import com.example.smsforwarder.core.engine.SmsProcessingEngine
 import com.example.smsforwarder.core.sms.model.SmsMessage
 import com.example.smsforwarder.core.sms.processor.SmsIntentProcessor
+import com.example.smsforwarder.storage.AppPreferences
 import com.example.smsforwarder.storage.EventLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ private const val CHANNEL_ID = "sms_monitor_channel"
 class SmsMonitorService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private lateinit var appPreferences: AppPreferences
     private lateinit var configManager: ConfigManager
     private lateinit var engine: SmsProcessingEngine
     private var lastCheckedSmsDate = 0L
@@ -42,8 +44,17 @@ class SmsMonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        appPreferences = AppPreferences(applicationContext)
         configManager = ConfigManager(applicationContext)
         engine = SmsProcessingEngine(configManager)
+        lastCheckedSmsDate = appPreferences.lastSmsScanTimestamp
+        if (lastCheckedSmsDate <= 0L) {
+            lastCheckedSmsDate = getLatestSmsDateInDatabase()
+            if (lastCheckedSmsDate > 0L) {
+                appPreferences.lastSmsScanTimestamp = lastCheckedSmsDate
+                Log.i(TAG, "初始化短信游标: $lastCheckedSmsDate")
+            }
+        }
         isRunning = true
         Log.i(TAG, "短信监控服务已启动")
         EventLog.add("监控服务已启动")
@@ -93,7 +104,7 @@ class SmsMonitorService : Service() {
                         val date = if (idxDate >= 0) it.getLong(idxDate) else 0L
 
                         if (body.isNotBlank()) {
-                            lastCheckedSmsDate = maxOf(lastCheckedSmsDate, date)
+                            updateLastCheckedSmsDate(date)
                             Log.d(TAG, "轮询发现新短信: ${address.take(3)}***")
                             val sms = SmsMessage(
                                 sender = address,
@@ -110,6 +121,36 @@ class SmsMonitorService : Service() {
         }
     }
 
+    private fun getLatestSmsDateInDatabase(): Long {
+        val resolver = contentResolver
+        val uri = Uri.parse("content://sms")
+        return try {
+            resolver.query(
+                uri,
+                arrayOf(Telephony.Sms.DATE),
+                null,
+                null,
+                "date DESC"
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val idxDate = cursor.getColumnIndex(Telephony.Sms.DATE)
+                    if (idxDate >= 0) cursor.getLong(idxDate) else 0L
+                } else {
+                    0L
+                }
+            } ?: 0L
+        } catch (e: Exception) {
+            Log.w(TAG, "初始化短信游标失败: ${e.message}")
+            0L
+        }
+    }
+
+    private fun updateLastCheckedSmsDate(date: Long) {
+        if (date <= 0L || date <= lastCheckedSmsDate) return
+        lastCheckedSmsDate = date
+        appPreferences.lastSmsScanTimestamp = date
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification())
@@ -119,6 +160,7 @@ class SmsMonitorService : Service() {
             val sms = SmsIntentProcessor.extractFromIntent(safeIntent)
             if (sms != null) {
                 serviceScope.launch {
+                    updateLastCheckedSmsDate(sms.timestamp)
                     engine.process(sms)
                 }
             }

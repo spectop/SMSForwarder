@@ -22,6 +22,7 @@
 11. 存储：`AppPreferences`（服务开关）、`EventLog`（StateFlow 日志，最多 100 条）。
 12. UI：`MainActivity`（Compose，Status + Config 双 Tab；状态指示、日志列表、YAML 编辑器、校验与保存）。
 13. 编译通过：解决 JDK 25 兼容问题（设置 `org.gradle.java.home` 为 AS JDK 21）；使用阿里云 Maven 镜像解决国内 TLS 下载失败；修复 `@OptIn(ExperimentalMaterial3Api::class)` 注解缺失。
+14. 短信去重改进：新增并持久化“最后短信扫描时间戳”游标；轮询与广播入口均更新游标，服务重启后不再重复处理游标之前的历史短信。
 
 ## 进行中
 
