@@ -1,6 +1,6 @@
 # SMSForwarder
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF.svg)](https://kotlinlang.org/)
 [![Android](https://img.shields.io/badge/Android-33+-3DDC84.svg)](https://www.android.com/)
 
@@ -272,7 +272,7 @@ class MyCustomPusher(ruleId: String, config: Map<String, String>) : BasePusher()
 
 ## 许可证
 
-本项目采用 [MIT 许可证](LICENSE)。
+本项目采用 [Apache License 2.0](LICENSE)。
 
 ## 致谢
 
