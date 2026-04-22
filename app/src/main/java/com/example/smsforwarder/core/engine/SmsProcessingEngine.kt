@@ -55,21 +55,35 @@ class SmsProcessingEngine(private val configManager: ConfigManager) {
         workflow: com.example.smsforwarder.core.config.model.Workflow,
         config: AppConfig
     ) {
-        // 1. 找到匹配规则
-        val matchingRule = config.findMatchingRule(workflow.matching)
-        if (matchingRule == null) {
-            Log.w(TAG, "工作流 [${workflow.id}] 找不到匹配规则: ${workflow.matching}")
+        // 1. 读取工作流匹配规则（任意一个命中即可）
+        val matchingIds = workflow.matchingIds()
+        if (matchingIds.isEmpty()) {
+            Log.w(TAG, "工作流 [${workflow.id}] 未配置匹配规则")
             return
         }
 
-        // 2. 执行规则匹配
-        val matchResult = RuleMatcher.match(sms, matchingRule)
-        if (!matchResult.isMatched) {
-            Log.d(TAG, "工作流 [${workflow.id}] 未命中: ${matchResult.message}")
+        var matchedRuleId: String? = null
+        var matchedResult: RuleMatcher.RuleMatchResult? = null
+        for (matchingId in matchingIds) {
+            val rule = config.findMatchingRule(matchingId)
+            if (rule == null) {
+                Log.w(TAG, "工作流 [${workflow.id}] 找不到匹配规则: $matchingId")
+                continue
+            }
+            val result = RuleMatcher.match(sms, rule)
+            if (result.isMatched) {
+                matchedRuleId = matchingId
+                matchedResult = result
+                break
+            }
+        }
+
+        if (matchedResult == null) {
+            Log.d(TAG, "工作流 [${workflow.id}] 未命中任何匹配规则")
             return
         }
 
-        Log.i(TAG, "工作流 [${workflow.id}] 命中: ${matchResult.message}")
+        Log.i(TAG, "工作流 [${workflow.id}] 命中规则 [$matchedRuleId]: ${matchedResult.message}")
         EventLog.add("工作流 [${workflow.name}] 命中，开始推送")
 
         // 3. 遍历推送器
@@ -86,7 +100,7 @@ class SmsProcessingEngine(private val configManager: ConfigManager) {
 
             // 4. 应用变量映射
             val varMappings = workflowPusher.varMap.mappings.map { it.source to it.target }
-            val resolvedVars = VariableResolver.applyVarMap(varMappings, matchResult.variables)
+            val resolvedVars = VariableResolver.applyVarMap(varMappings, matchedResult.variables)
 
             // 5. 创建并执行推送器
             val pusher = PusherFactory.create(pushRule)

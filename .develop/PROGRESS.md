@@ -23,6 +23,10 @@
 12. UI：`MainActivity`（Compose，Status + Config 双 Tab；状态指示、日志列表、YAML 编辑器、校验与保存）。
 13. 编译通过：解决 JDK 25 兼容问题（设置 `org.gradle.java.home` 为 AS JDK 21）；使用阿里云 Maven 镜像解决国内 TLS 下载失败；修复 `@OptIn(ExperimentalMaterial3Api::class)` 注解缺失。
 14. 短信去重改进：新增并持久化“最后短信扫描时间戳”游标；轮询与广播入口均更新游标，服务重启后不再重复处理游标之前的历史短信。
+15. 配置页重构：新增默认可视化配置模式（保留 YAML 编辑切换）；推送配置 UI 下沉到各 pusher 实现并通过注册表接入，增强与主应用解耦与扩展性。
+16. 配置交互优化：可视化配置拆分为匹配规则/Pusher/Workflow 三个独立子页；新增 Pusher 改为弹窗选择类型，列表图标与描述信息由各 pusher 提供。
+17. 配置体验再优化：三页改为“列表页 + 单条独立详情页”模式；Workflow 作为默认第一页；Workflow 编辑改为从已定义匹配规则与 Pusher 中选择，不再手动输入引用。
+18. Workflow 能力增强：匹配规则与 Pusher 在详情页改为弹窗多选，已选项以可删除标签展示；工作流执行支持多匹配规则“任意命中即触发”，并通过多个 Pusher 发送。
 
 ## 进行中
 

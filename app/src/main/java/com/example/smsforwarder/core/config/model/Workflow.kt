@@ -35,7 +35,8 @@ data class Workflow(
     val id: String,
     val name: String,
     val enabled: Boolean = true,
-    val matching: String,
+    val matching: String = "",
+    val matchings: List<String> = emptyList(),
     val pushers: List<WorkflowPusher> = emptyList()
 ) {
     /**
@@ -44,8 +45,19 @@ data class Workflow(
     fun isValid(): Boolean {
         return id.isNotEmpty() && 
                name.isNotEmpty() && 
-               matching.isNotEmpty() && 
+               matchingIds().isNotEmpty() && 
                pushers.all { it.isValid() }
+    }
+
+    /**
+     * 获取工作流关联的匹配规则 ID 列表。
+     * 兼容旧字段 matching 与新字段 matchings。
+     */
+    fun matchingIds(): List<String> {
+        if (matchings.isNotEmpty()) {
+            return matchings.filter { it.isNotBlank() }.distinct()
+        }
+        return if (matching.isNotBlank()) listOf(matching) else emptyList()
     }
     
     /**

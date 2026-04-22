@@ -31,4 +31,16 @@ object YamlConfigLoader {
             null
         }
     }
+
+    /**
+     * 将 AppConfig 序列化为 YAML 文本
+     */
+    fun dump(config: AppConfig): String? {
+        return try {
+            yaml.encodeToString(AppConfig.serializer(), config)
+        } catch (e: Exception) {
+            Log.e(TAG, "YAML 序列化失败: ${e.message}", e)
+            null
+        }
+    }
 }

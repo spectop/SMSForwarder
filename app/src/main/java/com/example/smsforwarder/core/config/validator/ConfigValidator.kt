@@ -52,8 +52,14 @@ object ConfigValidator {
         val pushRuleIds = config.push_rules.map { it.id }.toSet()
         config.workflows.forEach { wf ->
             if (wf.id.isEmpty()) errors.add("存在 id 为空的工作流")
-            if (wf.matching !in matchingIds) {
-                errors.add("工作流 [${wf.id}] 引用了不存在的匹配规则: ${wf.matching}")
+            val workflowMatchingIds = wf.matchingIds()
+            if (workflowMatchingIds.isEmpty()) {
+                errors.add("工作流 [${wf.id}] 未配置任何匹配规则")
+            }
+            workflowMatchingIds.forEach { matchingId ->
+                if (matchingId !in matchingIds) {
+                    errors.add("工作流 [${wf.id}] 引用了不存在的匹配规则: $matchingId")
+                }
             }
             wf.pushers.forEach { pusher ->
                 if (pusher.id !in pushRuleIds) {

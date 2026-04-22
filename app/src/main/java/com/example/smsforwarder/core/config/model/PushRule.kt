@@ -39,7 +39,7 @@ data class PushRule(
                 config.containsKey("token")
             }
             PusherType.CURL -> {
-                config.containsKey("template")
+                config.containsKey("url")
             }
         }
     }
